@@ -85,7 +85,12 @@ class HibikiRadioFetcher {
       ];
 
       debug("RECORDER_RET", yield recorder.record(pid, localFile, args));
-      debug("S3_RET", yield self.publish(remoteFile, localFile));
+      debug("S3_VIDEO_RET", yield self.publish(remoteFile, localFile));
+      debug("S3_INFO_RET",  yield s3.putObject({
+        Bucket: 'koebutter-fetcher',
+        Key: remoteFile + ".json",
+        Body: JSON.stringify(program)
+      }).promise());
     })
     .catch(err => {
       if (err.response) {
