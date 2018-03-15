@@ -15,8 +15,8 @@ functions:
   fetch:
     handler: handler.fetch
     timeout: 300
-#    events:
-#      - schedule: rate(10 minutes)
+    events:
+      - schedule: cron(0 8 * * ? *)
 
 resources:
   Resources:

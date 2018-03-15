@@ -58,6 +58,14 @@ class HibikiRadioFetcher {
       const remoteFile = `${pid}/${basename}`;
       console.log(`RESOLVE: ${pid} ==> ${program.name}[${ep_no}] (id=${program.episode.id})`);
 
+      const elpased = program.day_of_week - new Date().getUTCDay();
+
+      // don't fetch after 2 day
+      if (elpased !== 0 && elpased !== -1) {
+        console.log("out of date.");
+        return;
+      }
+
       if (yield self.fileExists(remoteFile)) {
         console.log("file already recorded.");
         return;

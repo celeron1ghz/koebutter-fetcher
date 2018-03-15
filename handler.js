@@ -4,6 +4,7 @@ const vo = require('vo');
 
 const config = [
   { channel: 'hibiki', programId: 'llss' },
+  { channel: 'hibiki', programId: 'lovelive-ms' },
 ];
 
 const CHANNELS = {
