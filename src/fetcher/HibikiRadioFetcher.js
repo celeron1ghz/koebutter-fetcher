@@ -7,9 +7,9 @@ const debug = require('debug')('koebutter');
 const recorder = require('../recorder/FfmpegRecorder');
 
 class HibikiRadioFetcher {
-  constructor(programId) {
-    if (!programId) { throw new Error("programId not specified") }
-    this.programId = programId;
+  constructor(args) {
+    if (!args.programId) { throw new Error("programId not specified") }
+    this.programId = args.programId;
   }
 
   _api_call(url, param) {
