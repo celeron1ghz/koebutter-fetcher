@@ -34,19 +34,21 @@ class HibikiRadioFetcher {
     return s3.putObject({ Bucket: 'koebutter-fetcher', Key: filename, Body: file }).promise();
   }
 
-  /*
-  const ret = yield (
-    request.get('https://vcms-api.hibiki-radio.jp/api/v1//programs')
-      .set('X-Requested-With', 'XMLHttpRequest')
-      .set('Origin', 'http://hibiki-radio.jp')
-  );
-  */
 
   fetch() {
     const self = this;
 
     return vo(function*(){
       const pid = self.programId;
+
+      debug("FETCH_PROGRAM_LIST:", pid);
+      const programs = (yield self._api_call('https://vcms-api.hibiki-radio.jp/api/v1//programs')).body;
+      const matched = programs.filter(p => p.access_id === pid);
+
+      if (matched.length === 0) {
+        console.log(`ID '${pid}' is not exist. skipping...`);
+        return;
+      }
 
       debug("FETCH_PROGRAM_INFO:", pid);
       const program = (yield self._api_call('https://vcms-api.hibiki-radio.jp/api/v1/programs/' + pid)).body;
