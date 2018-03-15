@@ -2,7 +2,7 @@ const fs = require("fs");
 const debug = require('debug')('koebutter');
 const { spawn } = require('child_process');
 
-const ffmpeg_bin = 'ffmpeg';
+const ffmpeg_bin = './ffmpeg';
 
 class FfmpegRecorder {
   static record(pid, output, args) {
