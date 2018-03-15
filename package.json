@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
+    "aws-sdk": "^2.209.0",
     "sprintf-js": "^1.1.1",
     "superagent": "^3.8.2",
     "tempy": "^0.2.1",

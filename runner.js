@@ -20,6 +20,6 @@ for (const c of config) {
       console.log(c.channel, ": ok")
     })
     .catch(err => {
-      console.log("Error:", err.message);
+      console.log("Error:", err);
     });
 }

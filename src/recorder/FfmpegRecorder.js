@@ -18,9 +18,9 @@ class FfmpegRecorder {
       const id = setInterval(() => {
         try {
           const stats = fs.statSync(output);
-          console.log("  size =", stats.size);
+          debug("  size =", stats.size);
         } catch (e) {
-          console.log("  file not created yet...");
+          debug("  file not created yet...");
         }
       },5000);
 
