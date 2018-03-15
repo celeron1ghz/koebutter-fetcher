@@ -9,7 +9,7 @@ provider:
   iamRoleStatements:
     - Effect: "Allow"
       Action: ["s3:PutObject", "s3:HeadObject"]
-      Resource: { Fn::Join : ["", ["arn:aws:s3:::", { Ref : Bucket } ] ]  }
+      Resource: { Fn::Join : ["", ["arn:aws:s3:::", { Ref : Bucket }, "/*" ] ]  }
 
 functions:
   fetch:
