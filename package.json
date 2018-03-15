@@ -1,0 +1,12 @@
+{
+  "name": "koebutter-fetcher",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "sprintf-js": "^1.1.1",
+    "superagent": "^3.8.2",
+    "tempy": "^0.2.1",
+    "vo": "^4.0.2"
+  }
+}
