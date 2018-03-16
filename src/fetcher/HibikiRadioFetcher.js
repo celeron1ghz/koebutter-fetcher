@@ -5,15 +5,14 @@ const request = require('superagent');
 const { sprintf } = require("sprintf-js");
 const debug = require('debug')('koebutter');
 
-const aws = require('aws-sdk');
-const s3  = new aws.S3();
-
+const Fetcher = require('../common/Fetcher');
 const recorder = require('../recorder/FfmpegRecorder');
 
 let __PROGRAM_LIST_CACHE = null;
 
-class HibikiRadioFetcher {
+class HibikiRadioFetcher extends Fetcher {
   constructor(args) {
+    super();
     if (!args.programId) { throw new Error("programId not specified") }
     this.programId = args.programId;
   }
@@ -22,18 +21,6 @@ class HibikiRadioFetcher {
     return request.get(url, param)
       .set('X-Requested-With', 'XMLHttpRequest')
       .set('Origin', 'http://hibiki-radio.jp');
-  }
-
-  fileExists(filename) {
-    return s3.headObject({ Bucket: 'koebutter-fetcher', Key: filename })
-      .promise()
-      .catch(() => null);
-  }
-
-  publish(filename, tempfile) {
-    console.log("PUT", filename);
-    const file = fs.createReadStream(tempfile);
-    return s3.putObject({ Bucket: 'koebutter-fetcher', Key: filename, Body: file }).promise();
   }
 
   fetch() {
@@ -64,13 +51,12 @@ class HibikiRadioFetcher {
       const remoteFile = `${pid}/${basename}`;
       console.log(`RESOLVE: ${pid} ==> ${program.name}[${ep_no}] (id=${program.episode.id})`);
 
-      const elpased = program.day_of_week - new Date().getUTCDay();
-
+      //const elpased = program.day_of_week - new Date().getUTCDay();
       // don't fetch after 2 day
-      if (elpased !== 0 && elpased !== -1) {
-        console.log("out of date.");
-        return;
-      }
+      //if (elpased !== 0 && elpased !== -1) {
+      //  console.log("out of date.");
+      //  return;
+      //}
 
       if (yield self.fileExists(remoteFile)) {
         console.log("file already recorded.");
@@ -91,12 +77,11 @@ class HibikiRadioFetcher {
       ];
 
       debug("RECORDER_RET", yield recorder.record(pid, localFile, args));
-      debug("S3_VIDEO_RET", yield self.publish(remoteFile, localFile));
-      debug("S3_INFO_RET",  yield s3.putObject({
-        Bucket: 'koebutter-fetcher',
-        Key: remoteFile + ".json",
-        Body: JSON.stringify(program)
-      }).promise());
+
+      const stream = fs.createReadStream(localFile);
+      debug("S3_VIDEO_RET", yield self.publish(remoteFile, stream));
+      debug("S3_INFO_RET",  yield self.publish(remoteFile + ".json", JSON.stringify(program)));
+
     })
     .catch(err => {
       if (err.response) {
