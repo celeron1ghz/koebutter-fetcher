@@ -24,6 +24,11 @@ class HibikiRadioFetcher extends Fetcher {
     return this._api_call('https://vcms-api.hibiki-radio.jp/api/v1/programs').then(data => data.body);
   }
 
+  filter_program(list) {
+    const pid = this.programId;
+    return list.filter(p => p.access_id === pid);
+  }
+
   get_filename(p) {
     const pid = this.programId;
     debug("FETCH_PROGRAM_INFO:", pid);

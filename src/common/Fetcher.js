@@ -38,7 +38,7 @@ class Fetcher {
 
 
       // pid exist check
-      const matched = __PROGRAM_LIST_CACHE[clazz].filter(p => p.access_id === pid);
+      const matched = self.filter_program(__PROGRAM_LIST_CACHE[clazz]);
 
       if (matched.length === 0) {
         console.log(`SKIP: ID '${pid}' is not exist.`);
@@ -50,7 +50,7 @@ class Fetcher {
       const f = yield self.get_filename(matched[0]);
 
       if (yield self.fileExists(f.remoteFile)) {
-        console.log("file already recorded.");
+        console.log("EXISTS:", f.remoteFile);
         return;
       }
 
