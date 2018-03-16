@@ -4,6 +4,7 @@ const request = require('superagent');
 const { sprintf } = require("sprintf-js");
 
 const Fetcher = require('../common/Fetcher');
+const Recorder = require('../recorder/FfmpegRecorder');
 
 class HibikiRadioFetcher extends Fetcher {
   constructor(args) {
@@ -48,7 +49,7 @@ class HibikiRadioFetcher extends Fetcher {
       });
   }
 
-  get_recorder_params(f) {
+  get_recorder(f) {
     const pid = this.programId;
     const { program, localFile } = f;
 
@@ -63,7 +64,8 @@ class HibikiRadioFetcher extends Fetcher {
         '-acodec', 'copy',
         '-bsf:a', 'aac_adtstoasc',
         localFile,
-      ]);
+      ])
+      .then(data => Recorder.record(pid, f.localFile, data));
   }
 }
 

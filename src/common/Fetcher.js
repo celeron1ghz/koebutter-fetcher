@@ -4,8 +4,6 @@ const vo = require('vo');
 const aws = require('aws-sdk');
 const s3  = new aws.S3();
 
-const Recorder = require('../recorder/FfmpegRecorder');
-
 const __PROGRAM_LIST_CACHE = {};
 
 class Fetcher {
@@ -56,8 +54,8 @@ class Fetcher {
 
 
       // recording...
-      const param = yield self.get_recorder_params(f);
-      debug("RECORDER_RET", yield Recorder.record(pid, f.localFile, param));
+      const recorder = yield self.get_recorder(f);
+      debug("RECORDER_RET", recorder);
 
 
       // put recorded file to s3...
