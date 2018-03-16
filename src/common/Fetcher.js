@@ -63,7 +63,8 @@ class Fetcher {
       console.log("PUT", f.remoteFile, fs.statSync(f.localFile).size);
       debug("S3_VIDEO_RET", yield self.publish(f.remoteFile, stream));
 
-      const decoded = JSON.stringify(f.program);
+      const moniker = self.constructor.name.replace('Fetcher', '').toLowerCase();
+      const decoded = JSON.stringify({ type: moniker, data: f.program });
       console.log("PUT", remoteInfoFile, decoded.length);
       debug("S3_INFO_RET",  yield self.publish(remoteInfoFile, decoded));
     })
