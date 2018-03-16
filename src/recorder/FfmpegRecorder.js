@@ -1,5 +1,5 @@
 const fs = require("fs");
-const debug = require('debug')('koebutter');
+const debug = require('debug')('koebutter.recorder.ffmpeg');
 const { spawn } = require('child_process');
 
 const ffmpeg_bin = './ffmpeg';

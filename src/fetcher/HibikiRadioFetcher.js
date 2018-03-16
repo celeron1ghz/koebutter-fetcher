@@ -3,12 +3,12 @@ const vo = require('vo');
 const tempy = require('tempy');
 const request = require('superagent');
 const { sprintf } = require("sprintf-js");
-const debug = require('debug')('koebutter');
+const debug = require('debug')('koebutter.fetcher.hibiki');
 
 const Fetcher = require('../common/Fetcher');
 const recorder = require('../recorder/FfmpegRecorder');
 
-let __PROGRAM_LIST_CACHE = null;
+const __PROGRAM_LIST_CACHE = {};
 
 class HibikiRadioFetcher extends Fetcher {
   constructor(args) {
@@ -23,50 +23,39 @@ class HibikiRadioFetcher extends Fetcher {
       .set('Origin', 'http://hibiki-radio.jp');
   }
 
-  fetch() {
-    const self = this;
+  fetch_program_list() {
+    const pid = this.programId;
+    debug("FETCH_PROGRAM_LIST:", pid);
+    return this._api_call('https://vcms-api.hibiki-radio.jp/api/v1/programs').then(data => data.body);
+  }
 
-    return vo(function*(){
-      const pid = self.programId;
+  get_filename(p) {
+    const pid = this.programId;
+    debug("FETCH_PROGRAM_INFO:", pid);
+    return this._api_call('https://vcms-api.hibiki-radio.jp/api/v1/programs/' + pid)
+      .then(data => data.body)
+      .then(program => {
+        const m = program.episode.name.match(/\d+/);
+        const basename = sprintf("%s%03d.mp4", pid, (m ? m[0] : 0));
+        console.log(`RESOLVE: ${pid} ==> ${program.name} (id=${program.episode.id}, file=${basename})`);
 
-      if (!__PROGRAM_LIST_CACHE) {
-        debug("FETCH_PROGRAM_LIST:", pid);
-        __PROGRAM_LIST_CACHE = (yield self._api_call('https://vcms-api.hibiki-radio.jp/api/v1//programs')).body;
-      }
+        return {
+          program,
+          basename,
+          remoteFile: `hibiki/${pid}/${basename}`,
+          localFile: tempy.file({ name: basename }),
+        };
+      });
+  }
 
-      const matched = __PROGRAM_LIST_CACHE.filter(p => p.access_id === pid);
+  get_recorder_params(f) {
+    const pid = this.programId;
+    const { program, localFile } = f;
 
-      if (matched.length === 0) {
-        console.log(`ID '${pid}' is not exist. skipping...`);
-        return;
-      }
-
-      debug("FETCH_PROGRAM_INFO:", pid);
-      const program = (yield self._api_call('https://vcms-api.hibiki-radio.jp/api/v1/programs/' + pid)).body;
-
-      const m          = program.episode.name.match(/\d+/);
-      const ep_no      = sprintf("%03d", m ? m[0] : 0);
-      const basename   = pid + ep_no + '.mp4';
-      const localFile  = tempy.file({ name: basename });
-      const remoteFile = `${pid}/${basename}`;
-      console.log(`RESOLVE: ${pid} ==> ${program.name}[${ep_no}] (id=${program.episode.id})`);
-
-      //const elpased = program.day_of_week - new Date().getUTCDay();
-      // don't fetch after 2 day
-      //if (elpased !== 0 && elpased !== -1) {
-      //  console.log("out of date.");
-      //  return;
-      //}
-
-      if (yield self.fileExists(remoteFile)) {
-        console.log("file already recorded.");
-        return;
-      }
-
-      debug("FETCH_EPISODE_INFO:", pid);
-      const episode = (yield self._api_call('https://vcms-api.hibiki-radio.jp/api/v1/videos/play_check', { video_id: program.episode.video.id })).body;
-
-      const args = [
+    debug("FETCH_EPISODE_INFO:", pid);
+    return this._api_call('https://vcms-api.hibiki-radio.jp/api/v1/videos/play_check', { video_id: program.episode.video.id })
+      .then(data => data.body)
+      .then(episode => [
         '-loglevel', 'error',
         '-y',
         '-i', episode.playlist_url,
@@ -74,14 +63,49 @@ class HibikiRadioFetcher extends Fetcher {
         '-acodec', 'copy',
         '-bsf:a', 'aac_adtstoasc',
         localFile,
-      ];
+      ])
+  }
 
-      debug("RECORDER_RET", yield recorder.record(pid, localFile, args));
+  fetch() {
+    const self = this;
 
-      const stream = fs.createReadStream(localFile);
-      debug("S3_VIDEO_RET", yield self.publish(remoteFile, stream));
-      debug("S3_INFO_RET",  yield self.publish(remoteFile + ".json", JSON.stringify(program)));
+    return vo(function*(){
+      const pid = self.programId;
+      const clazz = self.constructor.name;
 
+      // get program list
+      if (!__PROGRAM_LIST_CACHE[clazz]) {
+        __PROGRAM_LIST_CACHE[clazz] = yield self.fetch_program_list();
+      }
+
+
+      // pid exist check
+      const matched = __PROGRAM_LIST_CACHE[clazz].filter(p => p.access_id === pid);
+
+      if (matched.length === 0) {
+        console.log(`SKIP: ID '${pid}' is not exist.`);
+        return;
+      }
+
+
+      // recorded file exist check
+      const f = yield self.get_filename(matched[0]);
+
+      if (yield self.fileExists(f.remoteFile)) {
+        console.log("file already recorded.");
+        return;
+      }
+
+
+      // recording...
+      const param = yield self.get_recorder_params(f);
+      debug("RECORDER_RET", yield recorder.record(pid, f.localFile, param));
+
+
+      // put recorded file to s3...
+      const stream = fs.createReadStream(f.localFile);
+      debug("S3_VIDEO_RET", yield self.publish(f.remoteFile, stream));
+      debug("S3_INFO_RET",  yield self.publish(f.remoteFile + ".json", JSON.stringify(f.program)));
     })
     .catch(err => {
       if (err.response) {
