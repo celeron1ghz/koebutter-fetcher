@@ -18,7 +18,6 @@ class Fetcher {
   }
 
   publish(filename, content) {
-    console.log("PUT", filename);
     return s3.putObject({ Bucket: this.PublishBucket, Key: filename, Body: content }).promise();
   }
 
@@ -46,6 +45,7 @@ class Fetcher {
 
       // recorded file exist check
       const f = yield self.get_filename(matched[0]);
+      const remoteInfoFile = f.remoteFile + ".json";
 
       if (yield self.fileExists(f.remoteFile)) {
         console.log("EXISTS:", f.remoteFile);
@@ -60,8 +60,12 @@ class Fetcher {
 
       // put recorded file to s3...
       const stream = fs.createReadStream(f.localFile);
+      console.log("PUT", f.remoteFile, fs.statSync(f.localFile).size);
       debug("S3_VIDEO_RET", yield self.publish(f.remoteFile, stream));
-      debug("S3_INFO_RET",  yield self.publish(f.remoteFile + ".json", JSON.stringify(f.program)));
+
+      const decoded = JSON.stringify(f.program);
+      console.log("PUT", remoteInfoFile, decoded.length);
+      debug("S3_INFO_RET",  yield self.publish(remoteInfoFile, decoded));
     })
     .catch(err => {
       if (err.response) {
