@@ -10,6 +10,8 @@ const s3  = new aws.S3();
 
 const recorder = require('../recorder/FfmpegRecorder');
 
+let __PROGRAM_LIST_CACHE = null;
+
 class HibikiRadioFetcher {
   constructor(args) {
     if (!args.programId) { throw new Error("programId not specified") }
@@ -34,16 +36,18 @@ class HibikiRadioFetcher {
     return s3.putObject({ Bucket: 'koebutter-fetcher', Key: filename, Body: file }).promise();
   }
 
-
   fetch() {
     const self = this;
 
     return vo(function*(){
       const pid = self.programId;
 
-      debug("FETCH_PROGRAM_LIST:", pid);
-      const programs = (yield self._api_call('https://vcms-api.hibiki-radio.jp/api/v1//programs')).body;
-      const matched = programs.filter(p => p.access_id === pid);
+      if (!__PROGRAM_LIST_CACHE) {
+        debug("FETCH_PROGRAM_LIST:", pid);
+        __PROGRAM_LIST_CACHE = (yield self._api_call('https://vcms-api.hibiki-radio.jp/api/v1//programs')).body;
+      }
+
+      const matched = __PROGRAM_LIST_CACHE.filter(p => p.access_id === pid);
 
       if (matched.length === 0) {
         console.log(`ID '${pid}' is not exist. skipping...`);
