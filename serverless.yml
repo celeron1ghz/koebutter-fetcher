@@ -20,6 +20,7 @@ functions:
 
 resources:
   Resources:
+    ## cloudfront setting
     Bucket:
       Type: AWS::S3::Bucket
       Properties:
@@ -67,3 +68,14 @@ resources:
               DomainName: "${self:service}.s3.amazonaws.com"
               S3OriginConfig:
                 OriginAccessIdentity: "origin-access-identity/cloudfront/${ssm:/koebutter/oai_id~true}"
+
+    ## domain setting
+    RecordSetOfAPI:
+      Type: AWS::Route53::RecordSet
+      Properties:
+        Name: "kb.camelon.info"
+        Type: A
+        HostedZoneName: "camelon.info."
+        AliasTarget:
+          DNSName: { Fn::GetAtt: [CloudfrontOfCamelon, DomainName] }
+          HostedZoneId: Z2FDTNDATAQYW2
