@@ -5,7 +5,12 @@ const vo = require('vo');
 const config = [
   { channel: 'hibiki', programId: 'llss' },
   { channel: 'hibiki', programId: 'lovelive-ms' },
+  { channel: 'hibiki', programId: 'sora' },
+  { channel: 'hibiki', programId: 'revuestarlight' },
   { channel: 'onsen',  programId: 'aya-uchida' },
+  { channel: 'onsen',  programId: 'ff' },
+  { channel: 'onsen',  programId: 'garupa' },
+  { channel: 'onsen',  programId: 'mogucomi' },
 ];
 
 const CHANNELS = {
