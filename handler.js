@@ -21,7 +21,6 @@ const CHANNELS = {
 module.exports.fetch = (event, context, callback) => {
   vo(function*(){
     for (const c of config) {
-      console.log("-----");
       const fetcher = CHANNELS[c.channel];
 
       if (!fetcher) {
@@ -29,9 +28,13 @@ module.exports.fetch = (event, context, callback) => {
         continue;
       }
 
-      yield new fetcher(c).fetch().then(data => {
-        console.log(c.channel, ": ok");
-      });
+      try {
+        yield new fetcher(c).fetch().then(data => {
+          console.log(c.channel, ": ok");
+        });
+      } catch(err) {
+        console.log("Error on " + c.channel + ":", err);
+      }
     }
 
     callback(null, "OK");
