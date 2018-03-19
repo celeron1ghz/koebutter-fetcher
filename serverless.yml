@@ -24,3 +24,46 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: koebutter-fetcher
+
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: { Ref: Bucket }
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action: s3:GetObject
+              Principal:
+                AWS: "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${ssm:/koebutter/oai_id~true}"
+              Resource:
+                Fn::Join: [ "/", [ { Fn::GetAtt: [ Bucket, Arn ] }, "*" ] ]
+
+    CloudfrontOfCamelon:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Comment: koebutter archive
+          Aliases: ["kb.camelon.info"]
+          HttpVersion: http2
+          ViewerCertificate:
+            AcmCertificateArn: "${ssm:/koebutter/acm_cert_arn~true}"
+            SslSupportMethod: sni-only
+          DefaultRootObject: index.html
+          DefaultCacheBehavior:
+            TargetOriginId: Koebutter
+            ViewerProtocolPolicy: allow-all
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Origin
+            MinTTL: 8640000
+            MaxTTL: 8640000
+            DefaultTTL: 8640000
+            TrustedSigners: [{ Ref: AWS::AccountId }]
+          Enabled: true
+          Origins:
+            - Id: Koebutter
+              DomainName: "${self:service}.s3.amazonaws.com"
+              S3OriginConfig:
+                OriginAccessIdentity: "origin-access-identity/cloudfront/${ssm:/koebutter/oai_id~true}"
