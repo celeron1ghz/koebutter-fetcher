@@ -8,7 +8,7 @@ provider:
   versionFunctions: false
   iamRoleStatements:
     - Effect: "Allow"
-      Action: ["s3:PutObject", "s3:HeadObject"]
+      Action: ["s3:PutObject", "s3:GetObject"]
       Resource: { Fn::Join : ["", ["arn:aws:s3:::", { Ref : Bucket }, "/*" ] ]  }
 
 functions:

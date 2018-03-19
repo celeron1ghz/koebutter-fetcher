@@ -14,7 +14,8 @@ class Fetcher {
   fileExists(filename) {
     return s3.headObject({ Bucket: this.PublishBucket, Key: filename })
       .promise()
-      .catch(() => null);
+      .then(data => { console.log("RET", data); return data; })
+      .catch((err) => { console.log("ERR", err); return null });
   }
 
   publish(filename, content) {
@@ -50,6 +51,8 @@ class Fetcher {
       if (yield self.fileExists(f.remoteFile)) {
         console.log("EXISTS:", f.remoteFile);
         return;
+      } else {
+        console.log("NOT_EXIST:", f.remoteFile);
       }
 
 

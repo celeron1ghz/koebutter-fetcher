@@ -3,8 +3,8 @@
 const vo = require('vo');
 
 const config = [
-  //{ channel: 'hibiki', programId: 'llss' },
-  //{ channel: 'hibiki', programId: 'lovelive-ms' },
+  { channel: 'hibiki', programId: 'llss' },
+  { channel: 'hibiki', programId: 'lovelive-ms' },
   { channel: 'onsen',  programId: 'aya-uchida' },
 ];
 
