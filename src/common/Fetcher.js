@@ -14,7 +14,6 @@ class Fetcher {
   fileExists(filename) {
     return s3.headObject({ Bucket: this.PublishBucket, Key: filename })
       .promise()
-      .then(data => { console.log("RET", data); return data; })
       .catch((err) => { console.log("ERR", err); return null });
   }
 
