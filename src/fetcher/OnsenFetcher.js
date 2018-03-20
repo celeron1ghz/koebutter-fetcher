@@ -23,7 +23,7 @@ class OnsenFetcher extends Fetcher {
     this.programId = args.programId;
   }
 
-  fetch_program_list() {
+  fetchProgramList() {
     const pid = this.programId;
     debug("FETCH_PROGRAM_LIST:", pid);
     return request('http://www.onsen.ag/app/programs.xml')
@@ -31,12 +31,12 @@ class OnsenFetcher extends Fetcher {
       .then(data => data.programs.program);
   }
 
-  filter_program(list) {
+  filterProgram(list) {
     const pid = this.programId;
     return list.filter(p => p.$.id === pid);
   }
 
-  get_filename(program) {
+  getFilename(program) {
     const pid = this.programId;
     const basename = sprintf("%s%03d.mp4", pid, program.program_number);
 
@@ -50,9 +50,14 @@ class OnsenFetcher extends Fetcher {
     };
   }
 
-  get_recorder(f) {
+  getRecorder(f) {
     const pid = this.programId;
     const { program, localFile } = f;
+
+    if (!program.movie_url) {
+      throw new Error("hibiki." + pid + " error: program.movie_url === null");
+    }
+
     return Recorder.record(pid, localFile, program.movie_url);
   }
 }

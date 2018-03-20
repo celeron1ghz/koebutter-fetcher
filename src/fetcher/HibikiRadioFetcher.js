@@ -1,4 +1,3 @@
-const debug = require('debug')('koebutter.fetcher.hibiki');
 const tempy = require('tempy');
 const request = require('superagent');
 const { sprintf } = require("sprintf-js");
@@ -19,20 +18,17 @@ class HibikiRadioFetcher extends Fetcher {
       .set('Origin', 'http://hibiki-radio.jp');
   }
 
-  fetch_program_list() {
-    const pid = this.programId;
-    debug("FETCH_PROGRAM_LIST:", pid);
+  fetchProgramList() {
     return this._api_call('https://vcms-api.hibiki-radio.jp/api/v1/programs').then(data => data.body);
   }
 
-  filter_program(list) {
+  filterProgram(list) {
     const pid = this.programId;
     return list.filter(p => p.access_id === pid);
   }
 
-  get_filename(p) {
+  getFilename(p) {
     const pid = this.programId;
-    debug("FETCH_PROGRAM_INFO:", pid);
     return this._api_call('https://vcms-api.hibiki-radio.jp/api/v1/programs/' + pid)
       .then(data => data.body)
       .then(program => {
@@ -49,10 +45,14 @@ class HibikiRadioFetcher extends Fetcher {
       });
   }
 
-  get_recorder(f) {
+  getRecorder(f) {
     const pid = this.programId;
     const { program, localFile } = f;
-    debug("FETCH_EPISODE_INFO:", pid);
+
+    if (!program.episode.video) {
+      throw new Error("hibiki." + pid + " error: program.episode.video === null");
+    }
+
     return this._api_call('https://vcms-api.hibiki-radio.jp/api/v1/videos/play_check', { video_id: program.episode.video.id })
       .then(data => data.body)
       .then(episode => [

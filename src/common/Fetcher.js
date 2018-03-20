@@ -24,47 +24,54 @@ class Fetcher {
 
   fetch() {
     const self = this;
-    debug("fetch()");
+    debug("fetch.vo() GENERATE");
 
     return vo(function*(){
+      debug("fetch.vo() START");
       const pid = self.programId;
       const clazz = self.constructor.name;
 
       // get program list
       if (!__PROGRAM_LIST_CACHE[clazz]) {
-        debug("fetch_program_list()");
-        __PROGRAM_LIST_CACHE[clazz] = yield self.fetch_program_list();
+        debug("fetchProgramList()");
+        __PROGRAM_LIST_CACHE[clazz] = yield self.fetchProgramList();
       }
 
 
       // pid exist check
-      debug("filter_program()");
-      const matched = self.filter_program(__PROGRAM_LIST_CACHE[clazz]);
+      debug("filterProgram()");
+      const matched = self.filterProgram(__PROGRAM_LIST_CACHE[clazz]);
+      debug("filterProgram() ==>", matched[0]);
 
       if (matched.length === 0) {
         console.log(`SKIP: ID '${pid}' is not exist.`);
-        return;
+        debug("fetch.vo() RETURN_PID_NOT_EXIST");
+        return null;
       }
 
-      debug("filtered_program", matched[0]);
 
       // recorded file exist check
-      debug("get_filename()");
-      const f = yield self.get_filename(matched[0]);
+      debug("getFilename()");
+      const f = yield self.getFilename(matched[0]);
       const remoteInfoFile = f.remoteFile + ".json";
+      debug("getFilename() ==>", f);
 
       debug("fileExists()");
-      if (yield self.fileExists(f.remoteFile)) {
+      const exists = !!(yield self.fileExists(f.remoteFile));
+      debug("fileExists() ==>", exists);
+
+      if (exists) {
         console.log("EXISTS:", f.remoteFile);
-        return;
+        debug("fetch.vo() RETURN_ALREADY_EXISTS_FILE");
+        return null;
       } else {
         console.log("NOT_EXIST:", f.remoteFile);
       }
 
       // recording...
-      console.log("get_recorder()")
-      const recorder = yield self.get_recorder(f);
-      debug("RECORDER_RET", recorder);
+      debug("getRecorder()");
+      const recorder = yield self.getRecorder(f);
+      debug("getRecorder() ==>", recorder);
 
 
       // put recorded file to s3...
@@ -72,7 +79,8 @@ class Fetcher {
 
       if (stat.size < 1000000) {
         console.log("FAIL: Maybe fetch is fail. Please check!!! (size=" + stat.size + ')');
-        return;
+        debug("fetch.vo() RETURN_FETCH_FAIL");
+        return null;
       }
 
       const stream = fs.createReadStream(f.localFile);
@@ -83,12 +91,15 @@ class Fetcher {
       const decoded = JSON.stringify({ type: moniker, data: f.program });
       console.log("PUT", remoteInfoFile, decoded.length);
       debug("S3_INFO_RET",  yield self.publish(remoteInfoFile, decoded));
+      debug("fetch.vo() LAST_LINE");
     })
     .catch(err => {
       if (err.response) {
-        throw new Error(err.response.error.message); // network error
+        debug("fetch.vo() RETURN_ERROR_NETWORK");
+        return Promise.reject(new Error(err.response.error.message)); // network error
       } else {
-        throw err; // other error
+        debug("fetch.vo() RETURN_ERROR_UNKNOWN");
+        return Promise.reject(err); // other error
       }
     });
   }

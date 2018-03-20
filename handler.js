@@ -1,6 +1,7 @@
 'use strict';
 
 const vo = require('vo');
+const debug = require('debug')('koebutter');
 
 const config = [
   { channel: 'hibiki', programId: 'llss' },
@@ -19,26 +20,38 @@ const CHANNELS = {
 };
 
 module.exports.fetch = (event, context, callback) => {
+  debug("handler.vo() GENERATE");
   vo(function*(){
+    debug("handler.vo() START");
+
     for (const c of config) {
+      debug("handler.vo() LOOP_START");
+
       const fetcher = CHANNELS[c.channel];
 
       if (!fetcher) {
         console.log(`Error: unknown channel '${c.channel}'. skipped...`);
+        debug("handler.vo() CONTINUE_UNKNOWN_CHANNEL");
         continue;
       }
 
       try {
-        yield new fetcher(c).fetch();
+        yield new fetcher(c).fetch().catch(err => {
+          console.log("ERROR:", err.message);
+        });
       } catch(err) {
         console.log("Error on " + c.channel + ":", err);
       }
+
+      debug("handler.vo() LOOP_END");
     }
 
+    debug("handler.vo() LAST_LINE");
     callback(null, "OK");
+    return null;
   })
   .catch(err => {
-    console.log("Error:", err);
+    console.log("Uncaught error:", err);
     callback(err);
   });
 };
