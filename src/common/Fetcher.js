@@ -14,7 +14,8 @@ class Fetcher {
   fileExists(filename) {
     return s3.headObject({ Bucket: this.PublishBucket, Key: filename })
       .promise()
-      .catch((err) => { console.log("ERR", err); return null });
+      .catch(() => null);
+      //.catch((err) => { console.log("ERR", err); return null });
   }
 
   publish(filename, content) {
@@ -61,8 +62,15 @@ class Fetcher {
 
 
       // put recorded file to s3...
+      const stat = fs.statSync(f.localFile);
+
+      if (stat.size < 1000000) {
+        console.log("Maybe fetch is fail. Please check!!! (size=" + stat.size + ')');
+        return;
+      }
+
       const stream = fs.createReadStream(f.localFile);
-      console.log("PUT", f.remoteFile, fs.statSync(f.localFile).size);
+      console.log("PUT", f.remoteFile, stat.size);
       debug("S3_VIDEO_RET", yield self.publish(f.remoteFile, stream));
 
       const moniker = self.constructor.name.replace('Fetcher', '').toLowerCase();

@@ -29,9 +29,7 @@ module.exports.fetch = (event, context, callback) => {
       }
 
       try {
-        yield new fetcher(c).fetch().then(data => {
-          console.log(c.channel, ": ok");
-        });
+        yield new fetcher(c).fetch();
       } catch(err) {
         console.log("Error on " + c.channel + ":", err);
       }
