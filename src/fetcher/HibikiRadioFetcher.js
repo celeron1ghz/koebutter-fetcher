@@ -52,7 +52,6 @@ class HibikiRadioFetcher extends Fetcher {
   get_recorder(f) {
     const pid = this.programId;
     const { program, localFile } = f;
-
     debug("FETCH_EPISODE_INFO:", pid);
     return this._api_call('https://vcms-api.hibiki-radio.jp/api/v1/videos/play_check', { video_id: program.episode.video.id })
       .then(data => data.body)

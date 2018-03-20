@@ -24,6 +24,7 @@ class Fetcher {
 
   fetch() {
     const self = this;
+    debug("fetch()");
 
     return vo(function*(){
       const pid = self.programId;
@@ -31,11 +32,13 @@ class Fetcher {
 
       // get program list
       if (!__PROGRAM_LIST_CACHE[clazz]) {
+        debug("fetch_program_list()");
         __PROGRAM_LIST_CACHE[clazz] = yield self.fetch_program_list();
       }
 
 
       // pid exist check
+      debug("filter_program()");
       const matched = self.filter_program(__PROGRAM_LIST_CACHE[clazz]);
 
       if (matched.length === 0) {
@@ -43,11 +46,14 @@ class Fetcher {
         return;
       }
 
+      debug("filtered_program", matched[0]);
 
       // recorded file exist check
+      debug("get_filename()");
       const f = yield self.get_filename(matched[0]);
       const remoteInfoFile = f.remoteFile + ".json";
 
+      debug("fileExists()");
       if (yield self.fileExists(f.remoteFile)) {
         console.log("EXISTS:", f.remoteFile);
         return;
@@ -55,8 +61,8 @@ class Fetcher {
         console.log("NOT_EXIST:", f.remoteFile);
       }
 
-
       // recording...
+      console.log("get_recorder()")
       const recorder = yield self.get_recorder(f);
       debug("RECORDER_RET", recorder);
 
@@ -65,7 +71,7 @@ class Fetcher {
       const stat = fs.statSync(f.localFile);
 
       if (stat.size < 1000000) {
-        console.log("Maybe fetch is fail. Please check!!! (size=" + stat.size + ')');
+        console.log("FAIL: Maybe fetch is fail. Please check!!! (size=" + stat.size + ')');
         return;
       }
 
