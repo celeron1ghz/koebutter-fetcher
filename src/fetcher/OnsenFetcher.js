@@ -53,11 +53,6 @@ class OnsenFetcher extends Fetcher {
   getRecorder(f) {
     const pid = this.programId;
     const { program, localFile } = f;
-
-    if (!program.movie_url) {
-      throw new Error("hibiki." + pid + " error: program.movie_url === null");
-    }
-
     return Recorder.record(pid, localFile, program.movie_url);
   }
 }

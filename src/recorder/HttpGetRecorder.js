@@ -12,7 +12,9 @@ class HttpGetRecorder {
     return request.get(url)
       .buffer()
       .then(res => {
-        fs.writeFileSync(output, res.body);
+        const body = res.text ? res.text : res.body;
+        console.log("STATUS:", "CODE=" + res.status, "BODY=" + body.length);
+        fs.writeFileSync(output, body);
         console.timeEnd(timer_label);
       });
   }
