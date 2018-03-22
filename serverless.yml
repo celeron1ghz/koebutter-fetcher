@@ -18,6 +18,9 @@ functions:
     timeout: 300
     events:
       - schedule: cron(0 8 * * ? *)
+  feed:
+    handler: handler.feed
+    timeout: 300
 
 resources:
   Resources:
@@ -26,6 +29,11 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: koebutter-fetcher
+
+    LogBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: koebutter-log
 
     BucketPolicy:
       Type: AWS::S3::BucketPolicy
@@ -51,6 +59,8 @@ resources:
           ViewerCertificate:
             AcmCertificateArn: "${ssm:/koebutter/acm_cert_arn~true}"
             SslSupportMethod: sni-only
+          Logging:
+            Bucket: { Fn::Join : ["", [{ Ref: LogBucket }, ".s3.amazonaws.com"]]  }
           DefaultRootObject: index.html
           DefaultCacheBehavior:
             TargetOriginId: Koebutter
