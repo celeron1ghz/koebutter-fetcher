@@ -10,6 +10,9 @@ provider:
     - Effect: "Allow"
       Action: ["s3:PutObject", "s3:GetObject"]
       Resource: { Fn::Join : ["", ["arn:aws:s3:::", { Ref : Bucket }, "/*" ] ]  }
+    - Effect: "Allow"
+      Action: ["s3:GetObject"]
+      Resource: "arn:aws:s3:::koebutter-log/*"
 
 functions:
   fetch:
@@ -22,6 +25,15 @@ functions:
     handler: handler.feed
     timeout: 300
 
+  log:
+    handler: handler.log
+    events:
+      - s3:
+          bucket: koebutter-log
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .gz
+
 resources:
   Resources:
     ## cloudfront setting
@@ -29,11 +41,6 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: koebutter-fetcher
-
-    LogBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: koebutter-log
 
     BucketPolicy:
       Type: AWS::S3::BucketPolicy
@@ -60,7 +67,7 @@ resources:
             AcmCertificateArn: "${ssm:/koebutter/acm_cert_arn~true}"
             SslSupportMethod: sni-only
           Logging:
-            Bucket: { Fn::Join : ["", [{ Ref: LogBucket }, ".s3.amazonaws.com"]]  }
+            Bucket: { Fn::Join : ["", [{ Ref: S3BucketKoebutterlog }, ".s3.amazonaws.com"]]  }
           DefaultRootObject: index.html
           DefaultCacheBehavior:
             TargetOriginId: Koebutter
