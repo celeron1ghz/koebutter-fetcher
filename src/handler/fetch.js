@@ -12,11 +12,13 @@ const config = [
   { channel: 'onsen',  programId: 'ff' },
   { channel: 'onsen',  programId: 'garupa' },
   { channel: 'onsen',  programId: 'mogucomi' },
+  { channel: 'animatetimes',  programId: 'marugotorikako' },
 ];
 
 const CHANNELS = {
-  hibiki: require('../fetcher/HibikiRadioFetcher'),
-  onsen:  require('../fetcher/OnsenFetcher'),
+  hibiki:       require('../fetcher/HibikiRadioFetcher'),
+  onsen:        require('../fetcher/OnsenFetcher'),
+  animatetimes: require('../fetcher/AnimateTimesFetcher'),
 };
 
 module.exports.fetch = (event, context, callback) => {
