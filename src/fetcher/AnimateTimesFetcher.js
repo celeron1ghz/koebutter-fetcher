@@ -10,6 +10,7 @@ class AnimateTimesFetcher extends Fetcher {
     super();
     if (!args.programId) { throw new Error("programId not specified") }
     this.programId = args.programId;
+    this.episode   = args.episode;
   }
 
   fetchProgramList() {
@@ -39,6 +40,9 @@ class AnimateTimesFetcher extends Fetcher {
   }
 
   filterProgram(list) {
+    if (this.episode) {
+      return list.filter(l => l.episode === this.episode);
+    }
     return [list[0]];
   }
 

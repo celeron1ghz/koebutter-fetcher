@@ -38,6 +38,11 @@ class FfmpegRecorder {
         console.log("File output to", output, " size =", stats.size);
         resolve(output);
       });
+
+      //child.on('error', function(a,b,c){
+      //  console.log(a,b,c)
+      //});
+
     });
   }
 }

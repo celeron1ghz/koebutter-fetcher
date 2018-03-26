@@ -5,14 +5,14 @@ const debug = require('debug')('koebutter');
 
 const config = [
   { channel: 'hibiki', programId: 'llss' },
-  { channel: 'hibiki', programId: 'lovelive-ms' },
+  { channel: 'hibiki', programId: 'lovelive_ms' },
   { channel: 'hibiki', programId: 'sora' },
   { channel: 'hibiki', programId: 'revuestarlight' },
   { channel: 'onsen',  programId: 'aya-uchida' },
   { channel: 'onsen',  programId: 'ff' },
   { channel: 'onsen',  programId: 'garupa' },
   { channel: 'onsen',  programId: 'mogucomi' },
-  { channel: 'animatetimes',  programId: 'marugotorikako' },
+  { channel: 'animatetimes',  programId: 'marugotorikako', episode: '8' },
 ];
 
 const CHANNELS = {
