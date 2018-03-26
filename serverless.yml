@@ -24,7 +24,8 @@ functions:
   feed:
     handler: handler.feed
     timeout: 300
-
+    events:
+      - schedule: cron(5 8 * * ? *)
   log:
     handler: handler.log
     events:

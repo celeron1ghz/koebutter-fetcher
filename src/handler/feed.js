@@ -25,8 +25,9 @@ module.exports.feed = (event, context, callback) => {
     const keyId   = (yield ssm.getParameter({ Name: '/cloudfront/key_pair_id', WithDecryption: true }).promise() ).Parameter.Value;
     const secret  = (yield ssm.getParameter({ Name: '/cloudfront/private_key', WithDecryption: true }).promise() ).Parameter.Value;
     const sign    = new aws.CloudFront.Signer(keyId, secret);
-    const expires = Math.floor(new Date().getTime() / 1000) + 3600;
     const rssFiles = [];
+    const indexExpires = Math.floor(new Date().getTime() / 1000) + 60 * 60;
+    const linkExpires  = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24 * 30 * 1;
 
     // generate each rss
     for (const programs of _.values(genred)) {
@@ -38,7 +39,7 @@ module.exports.feed = (event, context, callback) => {
         const { type, data } = info;
 
         const url       = HOST + meta.Key;
-        const signedUrl = sign.getSignedUrl({ url: url, expires: expires });
+        const signedUrl = sign.getSignedUrl({ url: url, expires: linkExpires });
 
 
         if (type === "onsen") {
@@ -122,7 +123,7 @@ module.exports.feed = (event, context, callback) => {
     <div class="list-group">
     ${rssFiles.map(f => {
       const url = `${HOST}feed/${f.id}.rss`;
-      const signed = sign.getSignedUrl({ url: url, expires: expires });
+      const signed = sign.getSignedUrl({ url: url, expires: indexExpires });
       return `
         <div class="list-group-item">
           <h4 class="list-group-item-heading">${f.title} <a class="btn btn-primary" data-clipboard-text="${signed}">Copy!!</a></h4>
@@ -137,9 +138,10 @@ module.exports.feed = (event, context, callback) => {
     `;
     yield s3.putObject({ Bucket: BUCKET, Key: 'index.html', Body: page, ContentType: 'text/html' }).promise();
 
-    console.log( sign.getSignedUrl({ url: HOST + 'index.html', expires: expires }) );
+    const indexPage = sign.getSignedUrl({ url: HOST + 'index.html', expires: indexExpires });
+    console.log(indexPage);
 
-    callback(null, "OK");
+    callback(null, indexPage);
   })
   .catch(err => {
     console.log("Uncaught error:", err);
