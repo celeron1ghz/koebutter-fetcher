@@ -5,7 +5,7 @@ const ssm = new aws.SSM();
 const s3  = new aws.S3();
 const Podcast = require('podcast');
 
-const HOST   = 'https://kb.camelon.info/';
+const HOST   = 'https://kb.camelon.info';
 const BUCKET = 'koebutter-fetcher';
 const CHANNELS = {
   onsen: (data,meta,signedUrl) => {
@@ -75,7 +75,7 @@ module.exports.feedprogram = (event, context, callback) => {
         const info = JSON.parse(ret.Body.toString());
         const { type, data } = info;
 
-        const url       = HOST + meta.Key;
+        const url       = HOST + '/' + meta.Key;
         const signedUrl = sign.getSignedUrl({ url: url, expires: linkExpires });
         const generator = CHANNELS[type];
 
@@ -145,7 +145,7 @@ module.exports.feedprogram = (event, context, callback) => {
     <div class="alert alert-warning">番組に対応したURLをコピーして「URLから追加」みたいなメニューから追加してください。</div>
     <div class="list-group">
     ${rssFiles.map(f => {
-      const url = `${HOST}feed/${f.id}.rss`;
+      const url = `${HOST}/feed/${f.id}.rss`;
       const signed = sign.getSignedUrl({ url: url, expires: indexExpires });
       return `
         <div class="list-group-item">
@@ -163,7 +163,7 @@ module.exports.feedprogram = (event, context, callback) => {
     `;
     yield s3.putObject({ Bucket: BUCKET, Key: 'index.html', Body: page, ContentType: 'text/html' }).promise();
 
-    const indexPage = sign.getSignedUrl({ url: HOST + 'index.html', expires: indexExpires });
+    const indexPage = sign.getSignedUrl({ url: HOST + '/index.html', expires: indexExpires });
     console.log(indexPage);
 
     callback(null, indexPage);
