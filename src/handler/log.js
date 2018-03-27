@@ -22,8 +22,6 @@ module.exports.log = (event, context, callback) => {
         .filter(l => !l.match(/^#/))
         .filter(l => !l.match(/^\s*$/));
 
-      console.log(new Buffer(lines.unshift()));
-
       for (const line of lines) {
         console.log(line);
       }
