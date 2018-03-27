@@ -21,11 +21,13 @@ functions:
     timeout: 300
     events:
       - schedule: cron(0 8 * * ? *)
-  feed:
-    handler: handler.feed
-    timeout: 300
+
+  feedprogram:
+    handler: handler.feedprogram
+    timeout: 30
     events:
       - schedule: cron(5 8 * * ? *)
+
   log:
     handler: handler.log
     events:

@@ -44,7 +44,7 @@ const CHANNELS = {
   },
 };
 
-module.exports.feed = (event, context, callback) => {
+module.exports.feedprogram = (event, context, callback) => {
   vo(function*(){
     const files = yield s3.listObjectsV2({ Bucket: BUCKET })
       .promise()
