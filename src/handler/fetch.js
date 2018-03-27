@@ -12,7 +12,7 @@ const config = [
   { channel: 'onsen',  programId: 'ff' },
   { channel: 'onsen',  programId: 'garupa' },
   { channel: 'onsen',  programId: 'mogucomi' },
-  { channel: 'animatetimes',  programId: 'marugotorikako', episode: '8' },
+  { channel: 'animatetimes',  programId: 'marugotorikako', /*episode: '8'*/ },
 ];
 
 const CHANNELS = {

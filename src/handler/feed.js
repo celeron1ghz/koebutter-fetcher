@@ -7,6 +7,42 @@ const Podcast = require('podcast');
 
 const HOST   = 'https://kb.camelon.info/';
 const BUCKET = 'koebutter-fetcher';
+const CHANNELS = {
+  onsen: (data,meta,signedUrl) => {
+    return {
+      id:            data.$.id,
+      title:         `${data.title}`,
+      description:   `${data.title} (${data.program_number})`,
+      date:          data.up_date,
+      enclosure :    { url: signedUrl, size: meta.Size },
+      itunesImage:   'http://www.onsen.ag' + data.banner_image,
+      itunesEpisode: data.program_number,
+    };
+  },
+  hibikiradio: (data,meta,signedUrl) => {
+    const epno = data.episode.name.match(/\d+/)[0];
+    return {
+      id:            data.access_id,
+      title:         `${data.name}`,
+      description:   data.description,
+      date:          data.episode_updated_at,
+      enclosure :    { url: signedUrl, size: meta.Size },
+      itunesImage:   data.sp_image_url,
+      itunesEpisode: epno,
+    };
+  },
+  animatetimes: (data,meta,signedUrl) => {
+    return {
+      id:            data.id,
+      title:         data.title,
+      description:   data.title,
+      date:          data.date,
+      enclosure :    { url: signedUrl, size: meta.Size },
+      itunesImage:   data.image,
+      itunesEpisode: data.episode,
+    };
+  },
+};
 
 module.exports.feed = (event, context, callback) => {
   vo(function*(){
@@ -30,7 +66,8 @@ module.exports.feed = (event, context, callback) => {
     const linkExpires  = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24 * 30 * 1;
 
     // generate each rss
-    for (const programs of _.values(genred)) {
+    for (const pid of _.keys(genred)) {
+      const programs = genred[pid];
       const feeds = [];
 
       for (const meta of programs) {
@@ -40,34 +77,19 @@ module.exports.feed = (event, context, callback) => {
 
         const url       = HOST + meta.Key;
         const signedUrl = sign.getSignedUrl({ url: url, expires: linkExpires });
+        const generator = CHANNELS[type];
 
-
-        if (type === "onsen") {
-          feeds.push({
-            id:            data.$.id,
-            title:         `${data.title}`,
-            description:   `${data.title} (${data.program_number})`,
-            date:          data.up_date,
-            enclosure :    { url: signedUrl, size: meta.Size },
-            itunesImage:   'http://www.onsen.ag' + data.banner_image,
-            itunesEpisode: data.program_number,
-          });
+        if (!generator) {
+          console.log("UNKNOWN_TYPE:", type);
+          continue;
         }
 
-        if (type === "hibikiradio") {
-          const epno = data.episode.name.match(/\d+/)[0];
+        feeds.push(generator(data,meta,signedUrl));
+      }
 
-          feeds.push({
-            id:            data.access_id,
-            title:         `${data.name}`,
-            description:   data.description,
-            date:          data.episode_updated_at,
-            url:           url,
-            enclosure :    { url: signedUrl, size: meta.Size },
-            itunesImage:   data.sp_image_url,
-            itunesEpisode: epno,
-          });
-        }
+      if (feeds.length === 0) {
+        console.log("SKIP:", pid, "feed is empty");
+        continue;
       }
 
       const latest = feeds[0];
@@ -86,7 +108,7 @@ module.exports.feed = (event, context, callback) => {
 
       const feedKey = `feed/${latest.id}.rss`;
       const body = feed.buildXml(true);
-      console.log("PUT", feedKey, body.length);
+      console.log("PUT:", feedKey, body.length);
       yield s3.putObject({ Bucket: BUCKET, Key: feedKey, Body: body }).promise();
     }
 
@@ -111,7 +133,8 @@ module.exports.feed = (event, context, callback) => {
             e.clearSelection();
           });
           clipboard.on('error', function(e) {
-            alert("コピペが対応していないみたいなので下のテキストボックスからがんばってコピーして。")
+            alert("コピペが対応していないみたいなので下のテキストボックスからがんばってコピーして。");
+            e.target.setSelectionRange(0, e.target.value.length);
           });
         });
     </script>
@@ -127,7 +150,9 @@ module.exports.feed = (event, context, callback) => {
       return `
         <div class="list-group-item">
           <h4 class="list-group-item-heading">${f.title} <a class="btn btn-primary" data-clipboard-text="${signed}">Copy!!</a></h4>
-          <p class="list-group-item-text"><textarea class="form-control" rows="10" style="font-family:monospace" readonly>${signed}</textarea></p>
+          <p class="list-group-item-text">
+            <textarea class="form-control" rows="10" style="font-family:monospace" onclick="this.select();event.target.setSelectionRange(0, event.target.value.length);" readonly>${signed}</textarea>
+          </p>
         </div>
       `;
     }).join("")}

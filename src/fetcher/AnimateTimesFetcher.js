@@ -14,6 +14,7 @@ class AnimateTimesFetcher extends Fetcher {
   }
 
   fetchProgramList() {
+    const self = this;
     return agent.fetch('https://www.animatetimes.com/radio/archive.php?id=' + this.programId, {})
       .then(data => {
         const $ = data.$;
@@ -23,8 +24,8 @@ class AnimateTimesFetcher extends Fetcher {
 
         $('div[class="backNumberList"] div[class="box"]').each(function(idx){
           const e = $(this);
-
           const meta = {
+            id: self.programId,
             title: title,
             episode: e.find('span.title').text().match(/\d+/)[0],
             date:  e.find('span.date').text(),
