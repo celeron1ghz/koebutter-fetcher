@@ -3,6 +3,7 @@ const vo = require('vo');
 const aws = require('aws-sdk');
 const ssm = new aws.SSM();
 const s3  = new aws.S3();
+const cf  = new aws.CloudFront();
 const Podcast = require('podcast');
 
 const HOST   = 'https://kb.camelon.info';
@@ -62,8 +63,8 @@ module.exports.feedprogram = (event, context, callback) => {
     const secret  = (yield ssm.getParameter({ Name: '/cloudfront/private_key', WithDecryption: true }).promise() ).Parameter.Value;
     const sign    = new aws.CloudFront.Signer(keyId, secret);
     const rssFiles = [];
-    const indexExpires = Math.floor(new Date().getTime() / 1000) + 60 * 60;
-    const linkExpires  = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24 * 30 * 1;
+    const movieFileExpires   = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24; // 1day
+    const programFeedExpires = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24 * 30 * 12 * 1; // 1year
 
     // generate each rss
     for (const pid of _.keys(genred)) {
@@ -76,7 +77,7 @@ module.exports.feedprogram = (event, context, callback) => {
         const { type, data } = info;
 
         const url       = HOST + '/' + meta.Key;
-        const signedUrl = sign.getSignedUrl({ url: url, expires: linkExpires });
+        const signedUrl = sign.getSignedUrl({ url: url, expires: movieFileExpires });
         const generator = CHANNELS[type];
 
         if (!generator) {
@@ -112,7 +113,6 @@ module.exports.feedprogram = (event, context, callback) => {
       yield s3.putObject({ Bucket: BUCKET, Key: feedKey, Body: body }).promise();
     }
 
-
     // generate index page
     const page = `
 <!DOCTYPE html>
@@ -146,7 +146,7 @@ module.exports.feedprogram = (event, context, callback) => {
     <div class="list-group">
     ${rssFiles.map(f => {
       const url = `${HOST}/feed/${f.id}.rss`;
-      const signed = sign.getSignedUrl({ url: url, expires: indexExpires });
+      const signed = sign.getSignedUrl({ url: url, expires: programFeedExpires });
       return `
         <div class="list-group-item">
           <h4 class="list-group-item-heading">${f.title} <a class="btn btn-primary" data-clipboard-text="${signed}">Copy!!</a></h4>
@@ -161,12 +161,39 @@ module.exports.feedprogram = (event, context, callback) => {
   </body>
 </html>
     `;
+
     yield s3.putObject({ Bucket: BUCKET, Key: 'index.html', Body: page, ContentType: 'text/html' }).promise();
 
+    // invalidate
+    const id = process.env.CLOUDFRONT_DIST_ID;
+    console.log("INVALIDATE:", JSON.stringify(id));
+
+    yield cf.createInvalidation({
+      DistributionId : id,
+      InvalidationBatch : {
+        CallerReference : '' + new Date().getTime(),
+        Paths : { Quantity: 2, Items: [ '/feed/*', '/index.html' ] }
+      }
+    }).promise();
+
+    callback(null, "OK");
+  })
+  .catch(err => {
+    console.log("Uncaught error:", err);
+    callback(err);
+  });
+};
+
+module.exports.feedurl = (event, context, callback) => {
+  vo(function*(){
+    const keyId   = (yield ssm.getParameter({ Name: '/cloudfront/key_pair_id', WithDecryption: true }).promise() ).Parameter.Value;
+    const secret  = (yield ssm.getParameter({ Name: '/cloudfront/private_key', WithDecryption: true }).promise() ).Parameter.Value;
+    const sign    = new aws.CloudFront.Signer(keyId, secret);
+
+    const indexExpires = Math.floor(new Date().getTime() / 1000) + 60 * 60;
     const indexPage = sign.getSignedUrl({ url: HOST + '/index.html', expires: indexExpires });
     console.log(indexPage);
-
-    callback(null, indexPage);
+    callback(null,indexPage);
   })
   .catch(err => {
     console.log("Uncaught error:", err);
