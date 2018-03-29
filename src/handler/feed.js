@@ -176,24 +176,11 @@ module.exports.feedprogram = (event, context, callback) => {
       }
     }).promise();
 
-    callback(null, "OK");
-  })
-  .catch(err => {
-    console.log("Uncaught error:", err);
-    callback(err);
-  });
-};
-
-module.exports.feedurl = (event, context, callback) => {
-  vo(function*(){
-    const keyId   = (yield ssm.getParameter({ Name: '/cloudfront/key_pair_id', WithDecryption: true }).promise() ).Parameter.Value;
-    const secret  = (yield ssm.getParameter({ Name: '/cloudfront/private_key', WithDecryption: true }).promise() ).Parameter.Value;
-    const sign    = new aws.CloudFront.Signer(keyId, secret);
-
-    const indexExpires = Math.floor(new Date().getTime() / 1000) + 60 * 60;
+    const indexExpires = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24 * 1; // 1day
     const indexPage = sign.getSignedUrl({ url: HOST + '/index.html', expires: indexExpires });
     console.log(indexPage);
-    callback(null,indexPage);
+
+    callback(null, "OK");
   })
   .catch(err => {
     console.log("Uncaught error:", err);
