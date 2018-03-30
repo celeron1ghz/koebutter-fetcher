@@ -23,7 +23,8 @@ module.exports.log = (event, context, callback) => {
         .filter(l => !l.match(/^\s*$/));
 
       for (const line of lines) {
-        console.log(line);
+        const s = line.split("\t");
+        console.log(s[0], s[1], s[7], s[8]);
       }
       callback(null,"OK");
     })
