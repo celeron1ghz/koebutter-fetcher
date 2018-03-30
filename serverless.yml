@@ -27,6 +27,7 @@ provider:
 functions:
   fetch:
     handler: handler.fetch
+    description: koebutter media fetcher
     memorySize: 3008
     timeout: 300
     events:
@@ -34,6 +35,7 @@ functions:
 
   feedprogram:
     handler: handler.feedprogram
+    description: koebutter feed generator
     timeout: 30
     events:
       - schedule: cron(5 8 * * ? *)
@@ -42,6 +44,7 @@ functions:
 
   log:
     handler: handler.log
+    description: koebutter accesslog
     events:
       - s3:
           bucket: koebutter-log
